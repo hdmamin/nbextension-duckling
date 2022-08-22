@@ -1,0 +1,39 @@
+#nbextension-duckling {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 50%;
+  background-color: #FFFFFF;
+  border-right: 2px solid #41A5F5;
+  border-top: 2px solid #41A5F5;
+  z-index: 105;
+}
+
+#nbextension-duckling .cell-wrapper {
+  height: 100%; 
+  overflow: auto;
+}
+
+.duckling-btn {
+  float: left;
+  margin-left: 24px;
+  opacity: 0.2;
+  font-size: 24px;
+  z-index: 106;
+}
+
+.duckling-btn:hover {
+  opacity: 1;
+}
+
+.duckling-close {
+  display: none;
+  position: absolute;
+  float: left;
+  bottom: 8px;
+  right: 0;
+}
+
+.duckling-open {
+  margin-top: 32px;
+}

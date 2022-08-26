@@ -32,12 +32,17 @@ X -bug: input_prompt (thing in brackets next to cell) is an incremented number i
 X -get update cell output working
     UPDATE: cell.output_area.handle_output() may be promising for updating code cell output without executing. Hold off for now though - prob a good idea to change to a text cell if possible. Jupyter seems to think my dict is undefined - maybe expects a different type?
 	UPDATE: json object they were expecting was a bit more nested than I realized. Also needed to call method directly instead of using apply() the way the source code does /shrug.
+X -try to rm syntax highlighting
+	~ -option 1: change code cell to text cell. We're not executing it anyway.
+	UPDATE: tried this. Doesn't natively have an output cell. Could have tried manually adding one but there were other issues (e.g. couldn't run it, shift enter executed the still highlighted cell in the main notebook) so I went with the other approach.
+	_ -option 2: pass in custom settings to CodeCell init. Unclear if this can be overridden.
+		UPDATE: couldn't find a way to pass in or edit the settings post hoc to make this work. Jupyter uses codemirror for syntax highlighting and I couldn't find any way to disable it, add a new syntax mode (without submitting a PR to codemirror), or change the current mode (markdown would have been fine but oh well).
+	UPDATE: hacky solution was to manually add css to all css class names for codemirror-rendered elements inside my extension. Rather fragile if jupyter changes anything but I guess that was always going to be true. Would be a bit better to just change 1 class (the div.CodeMirror-code) as opposed to all the individual spans, but I need to figure out how to make it override the child classes.
 
 TODO
 ----
--try to rm syntax highlighting
-	-option 1: change code cell to text cell. We're not executing it anyway.
-	-option 2: pass in custom settings to CodeCell init. Unclear if this can be overridden.
+-increase min-width (and maybe min-height) of popup box (gets very tiny as page shrinks)
+-try to make lack of syntax highlighting just refer to all children of div.CodeMirror-code elements inside my extension, instead of calling out every individual span class. Slightly more robust against jupyter/codemirror api changes.
 -incrementally get closer to desired cell execution method (dynamically get server url, make async call to endpoint, update output cell w/ markdown)
 	-change sync call to async (talk to codex while kernel is executing code? 😱)
 	-consider what code to pass to endpoint (last executed cell, currently selected cell, or nb name and load all code in py file?)
@@ -52,6 +57,8 @@ TODO
 
 Backlog
 -------
+-bug: sometimes jupyter renders a triangular "play" button next to each cell, and clicking the one next to mine tried to execute it as a regular code cell rather than my new logic.
+-opening dev console messes up my ext popup when you close it (all zoomed in, partially offscreen, etc.). Just resizing the page is okay though.
 -[BLOCKED: decide if this is desirable behavior first] follow up on how to pass last executed cell code to endpoint. Recall we can access this in python with get_ipython().history_manager.get_tail(1) but Jupyter.history_manager doesn't seem to exist in JS.
 -bug: shift+enter no longer working in scratchpad (NOT duckling)
 

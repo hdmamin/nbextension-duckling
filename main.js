@@ -90,6 +90,9 @@ define([
   Duckling.prototype.toggle = function () {
     if (this.collapsed) {
       this.expand();
+	  // TODO consider if I want to clear inputs/outputs when closing cell. Initially thought yes but now leaning no. Useful to toggle back and forth frequently to see code and don't want to erase everything every time.
+	  // this.cell.set_text("");
+      // this.cell.output_area.clear_output();
     } else {
       this.collapse();
     }

@@ -14,6 +14,11 @@
   overflow: auto;
 }
 
+#nbextension-duckling span.cm-def, span.cm-variable, span.cm-variable-2, span.cm-keyword, span.cm-string, span.cm-comment, span.cm-property, span.cm-operator, span.cm-builtin {
+  color: black !important;
+  font-weight: normal !important;
+}
+
 .duckling-btn {
   float: left;
   margin-left: 24px;

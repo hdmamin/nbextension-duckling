@@ -3,17 +3,85 @@ X -consider alternatives:
         UPDATE: these sound useful too but I do like the hotkey popup box UI.
     _ -subclass ipython kernel (can this be loaded in jupyter? Probably)
         UPDATE: promising for long term programming redesign. Not as useful for short term idea.
--set up simple server extension
+X -set up simple server extension
     X -create endpoint that returns the input but uppercased (or something like that)
     X -get endpoint to render in browser (cur results in page not found)
         UPDATE: moved jupyter load func to init.py, removed leading underscore, ran jupyter w/ extra flag, added jupyter serverextension install line to makefile.
-    -figure out how to call endpoint from main.js
+    X -figure out how to call endpoint from main.js
 		UPDATE: tutorial uses jupytper typescript module. Having trouble figuring out the js equivalent.
-    ~ -update endpoint to call codex
+    X -update endpoint to call codex
 		UPDATE: get request works with curl and "repeat" backend. Would be nice to get post working (don't love the idea of passing all vars in url) but so far getting auth errors there).
--further investigate possibility of enabling post request instead of get in handlers.py
--brainstorm more possibilities for solving the issue of connecting frontend ext and server ext (e.g. see if we can transpile to typescript, use codex to translate to typescript, search more for js examples, try codex translating typescript example to requirejs, ask question on stackoverflow, comment on jupytercon youtube vid, etc.) and consider how to proceed
--figure out how to access most recently run cell. Useful if we don't want to include whole nb in query.
--bug: input_prompt (thing in brackets next to cell) is an incremented number instead of "User" after running (Note: may be better to figure out how to use a text cell, which doesn't have number prompts. But the text cell wasn't rendering at all.)
+X -brainstorm more possibilities for solving the issue of connecting frontend ext and server ext (e.g. see if we can transpile to typescript, use codex to translate to typescript, search more for js examples, ask question on stackoverflow, comment on jupytercon youtube vid, etc.) and consider how to proceed
+	X -codex convert to typescript
+		UPDATE: got stuck converting imports. Could try to tune prompt but not the most promising route.
+	X -try to manually call server using github discussion
+	_ -manually convert to typescript (follow sample jupyter TS tutorial, basically. Problem is a lot of the jquery UI stuff might need to be re-implemented and I don't really know how).
+~ -incrementally get closer to desired cell execution method (dynamically get server url, make async call to endpoint, update output cell w/ markdown)
+	X -call mock api (jeopardy)
+	X -call server url (hardcoded)
+	-change sync call to async (talk to codex while kernel is executing code? 😱)
+	X -render output w/ newlines etc (1 idea: after getting response, briefly update cell text and execute it, then change cell text back to original. Should be too fast to notice. As a code cell, we'd need to add print + quotes to get newlines in output. As a text cell, I think it would work out of the box, though we'd first have to solve the general issues I've had with getting text cells to render in the first place.)
+	-consider what code to pass to endpoint (last executed cell, currently selected cell, or nb name and load all code in py file?)
+		X -find how to pass selected cell code to endpoint
+		~ -find how to pass last executed cell code to endpoint
+			UPDATE: jupyter rerun magic showed me this is available in python via get_ipython().history_manager.get_tail(1), but Jupyter.history_manager does not seem to exist.
+		-try passing nb path to endpoint
+	-pass local vars to endpoint
+	-pass global vars to endpoint
+X -bug: input_prompt (thing in brackets next to cell) is an incremented number instead of "User" after running (Note: may be better to figure out how to use a text cell, which doesn't have number prompts. But the text cell wasn't rendering at all.)
+X -get update cell output working
     UPDATE: cell.output_area.handle_output() may be promising for updating code cell output without executing. Hold off for now though - prob a good idea to change to a text cell if possible. Jupyter seems to think my dict is undefined - maybe expects a different type?
+	UPDATE: json object they were expecting was a bit more nested than I realized. Also needed to call method directly instead of using apply() the way the source code does /shrug.
+
+TODO
+----
+-try to rm syntax highlighting
+	-option 1: change code cell to text cell. We're not executing it anyway.
+	-option 2: pass in custom settings to CodeCell init. Unclear if this can be overridden.
+-incrementally get closer to desired cell execution method (dynamically get server url, make async call to endpoint, update output cell w/ markdown)
+	-change sync call to async (talk to codex while kernel is executing code? 😱)
+	-consider what code to pass to endpoint (last executed cell, currently selected cell, or nb name and load all code in py file?)
+		-see if we can resolve absolute path to nb (cur have local but we'd need whole thing to load all file code in py file. Or could reconstruct code using history_manager if I can get that working (see backlog)
+	-pass local vars to endpoint
+	-pass global vars to endpoint
+-python endpoint updates
+	-convert get to post if possible (jupyter seemed to not like this)
+	-return full dict instead of just str?
+		-set error status codes appropriately
+
+
+Backlog
+-------
+-[BLOCKED: decide if this is desirable behavior first] follow up on how to pass last executed cell code to endpoint. Recall we can access this in python with get_ipython().history_manager.get_tail(1) but Jupyter.history_manager doesn't seem to exist in JS.
 -bug: shift+enter no longer working in scratchpad (NOT duckling)
+
+Notes
+-----
+js Attributes:
+
+Jupyter
+-------
+['utils', 'mathjaxutils', 'security', 'keyboard', 'dialog', 'CommManager', 'Comm', 'NotificationWidget', 'Kernel', 'Session', 'LoginWidget', 'Page', 'TextCell', 'OutputArea', 'KeyboardManager', 'Completer', 'Notebook', 'Tooltip', 'Toolbar', 'SaveWidget', 'Pager', 'QuickHelp', 'MarkdownCell', 'RawCell', 'Cell', 'MainToolBar', 'NotebookNotificationArea', 'NotebookTour', 'MenuBar', 'SessionList', 'version', '_target', 'Events', 'events', 'CellToolbar', 'CodeCell', 'promises', 'kernelselector', 'page', 'notebook', 'contents', 'pager', 'quick_help', 'login_widget', 'menubar', 'toolbar', 'notification_area', 'keyboard_manager', 'save_widget', 'tooltip', 'actions', 'WidgetManager']
+
+-accessing Jupyter.utils is deprecated. Need base/js/utils.
+
+Jupyter.notebook
+----------------
+['config', 'class_config', 'base_url', 'notebook_path', 'notebook_name', 'events', 'keyboard_manager', 'contents', 'save_widget', 'tooltip', 'ws_url', '_session_starting', 'last_modified', '_last_modified', '_ff_beforeunload_fired', 'scroll_manager', 'element', 'session', 'kernel', 'kernel_busy', 'clipboard', 'clipboard_attachments', 'undelete_backup_stack', 'paste_enabled', 'paste_attachments_enabled', 'writable', 'mode', 'metadata', '_checkpoint_after_save', 'last_checkpoint', 'checkpoints', 'autosave_interval', 'autosave_timer', 'minimum_autosave_interval', 'notebook_name_blacklist_re', 'nbformat', 'current_nbformat_minor', 'nbformat_minor', 'codemirror_mode', 'container', 'kernel_selector', 'dirty', 'trusted', '_changed_on_disk_dialog', '_fully_loaded']
+
+notebook_name, duckling-scratchpad.ipynb (relative path)
+
+Jupyter.notebook.session
+------------------------
+['id', 'notebook_model', 'kernel_model', 'base_url', 'ws_url', 'session_service_url', 'session_url', 'notebook', 'kernel', 'events']
+
+session url, /api/sessions/a9ad5517-2852-4577-ac60-654a2fcd7b85
+base url, /
+ws_url, ""
+session service url, /api/sessions
+
+Jupyter.notebook.kernel
+-----------------------
+['events', 'id', 'name', 'ws', '_stopping', 'kernel_service_url', 'kernel_url', 'ws_url', 'username', 'session_id', '_msg_callbacks', '_msg_callbacks_overrides', '_display_id_to_parent_ids', '_msg_queue', 'info_reply', 'WebSocket', '_iopub_handlers', 'comm_manager', 'last_msg_id', 'last_msg_callbacks', '_autorestart_attempt', '_reconnect_attempt', 'reconnect_limit', '_pending_messages', 'widget_manager']
+
+ws_url, "ws://localhost:8889"

@@ -43,14 +43,18 @@ define([
       duckling.collapse();
     });
 
-    // create my cell
+    // Create code cell that will pop up on user hotkey.
+	// TODO: trying to disable syntax highlighting. Better way is prob to try to get text cell working.
+	// var cell_config = {...nb.config};
+	// cell_config.highlight_modes = {};
     var cell = this.cell = new CodeCell(nb.kernel, {
       events: nb.events,
-      config: nb.config,
-      keyboard_manager: nb.keyboard_manager,
-      notebook: nb,
-      tooltip: nb.tooltip,
-    });
+	    config: nb.config,
+	//	config: cell_config,
+		keyboard_manager: nb.keyboard_manager,
+		notebook: nb,
+		tooltip: nb.tooltip,
+		});
     /*var cell = this.cell = new TextCell({
       events: nb.events,
       config: nb.config,
@@ -117,30 +121,61 @@ define([
   };
 
     // TODO: from typescript example. Figure out js equivalent
-  async callServer(): Promise<void> {
+  //async callServer(): Promise<void> {
       //let settings = services.ServerConnection.makeSettings({});
       //let serverResponse = await services.ServerConnection.makeRequest(
         //coreutils.URLExt.join(settings.baseUrl, '/duckling/ask'), {method: 'GET'}, settings);
       //)
       //alert(await serverResponse.text());
-  }
+  //}
+
+  //async callServer(url) {
+	  //var req = new XMLHttpRequest();
+	  //req.open("GET", url, true);
+	  //req.send();
+
+		// V2
+	  //return await fetch(url).then(response => response.json());
+  //}
 
   Duckling.prototype.execute_and_select_event = function (evt) {
     if (utils.is_focused(this.element)) {
       var txt = this.cell.get_text();
-      this.cell.set_text("print('''" + txt + "''')");
-      //this.cell.execute();
+
+	  var cur_cell = Jupyter.notebook.get_selected_cell();
+	  var code = cur_cell.get_text();
+
+	  // Https doesn't work, even from command line with curl. Has to be http.
+	  var base_url = Jupyter.notebook.kernel.ws_url.replace("ws://", "http://");
+	  var url = base_url + "/duckling/ask?question=" + encodeURIComponent(txt) + "&code=" + encodeURIComponent(code);
+	  //req = fetch(url).then(response => response.json());
+	  var req = new XMLHttpRequest();
+	  // TODO: see if we can get async working (set third arg to true or switch to using commented out fetch line above).
+	  // Would need to change 1 or more functions to be async to avoid errors (sync can't call async).
+	  req.open("GET", url, false);
+	  req.send();
+
       var output = {
-        msg_type: "stream",
-        text: txt.toUpperCase(),
-        name: "TODO"
+        header: {
+			msg_type: "stream"
+		},
+        content: {
+			//text: JSON.parse(req.response)[0].question, // parse mock jeopary api
+			text: req.response, // Currently server extension just returns bytes.
+			name: "My-Name",
+		}
       }
-      alert(JSON.stringify(output));
-      // this.cell.output_area.handle_output.apply(this.cell.output_area, output) // TODO: Trying to manually update output. "Cannot read properties of undefined" error
-      this.cell.set_text(txt);
+
+	  // Clear output first otherwise subsequent executions append output.
+      this.cell.output_area.clear_output()
+      this.cell.output_area.handle_output(output)
+
       this.cell.set_input_prompt("User"); // Not working. Number next to cell is incremented rather than setting to User.
-      //alert(Jupyter.notebook.kernel.last_execution_result); // Cell not dfeined error.
-        //this.cell.output_area.append_raw_input(txt); // Breaks whole extension. Must be wrong syntax or something.
+
+	  // GENERAL DEBUGGING
+	  console.log(Jupyter);
+	  //alert(Jupyter.notebook.kernel.last_execution_result); // Cell not dfeined error.
+
     } else {
       this.notebook.execute_cell_and_select_below();
     }

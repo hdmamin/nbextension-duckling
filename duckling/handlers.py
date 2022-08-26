@@ -22,12 +22,14 @@ class DucklingHandler(JupyterHandler):
             data[name] = self.get_argument(name, data[name])
         # TODO: can think about when we should skip the query (i.e. no code,
         # no question, etc.). For now just filled in default values.
-        if not data['code']:
+        if data['code']:
+            # TODO: allow diff options based on extension config and/or payload? Only openai backend provides codex,
+            # though GPTj was trained on a lot of code too.
             with GPT('repeat'):
                 res, _ = PM.query('debug', data)
             self.write(res[0])
         else:
-            self.write('TODO')
+            self.write('TODO: handle no code')
 
 
 

@@ -38,18 +38,19 @@ X -try to rm syntax highlighting
 	_ -option 2: pass in custom settings to CodeCell init. Unclear if this can be overridden.
 		UPDATE: couldn't find a way to pass in or edit the settings post hoc to make this work. Jupyter uses codemirror for syntax highlighting and I couldn't find any way to disable it, add a new syntax mode (without submitting a PR to codemirror), or change the current mode (markdown would have been fine but oh well).
 	UPDATE: hacky solution was to manually add css to all css class names for codemirror-rendered elements inside my extension. Rather fragile if jupyter changes anything but I guess that was always going to be true. Would be a bit better to just change 1 class (the div.CodeMirror-code) as opposed to all the individual spans, but I need to figure out how to make it override the child classes.
-
-TODO
-----
 X -increase min-width (and maybe min-height) of popup box (gets very tiny as page shrinks)
 X -try to make lack of syntax highlighting just refer to all children of div.CodeMirror-code elements inside my extension, instead of calling out every individual span class. Slightly more robust against jupyter/codemirror api changes.
 	UPDATE: even better - figured out how to make css just make all text inside my extension black and non bold. No reliance on jupyter class names.
+
+TODO
+----
 -incrementally get closer to desired cell execution method (dynamically get server url, make async call to endpoint, update output cell w/ markdown)
+	-pass local vars to endpoint
+		UPDATE: still can't find how to get vars in js. Think maybe this happens at the ipython layer (?) so the jupyter api may not be of much use here. Some other options are to follow variable inspector extension example to execute python code printing locals, use js to select codemirror variables from the DOM, or load the notebook text in the backend and do some kind of ast parsing to find vars.
+	-pass global vars to endpoint
 	-change sync call to async (talk to codex while kernel is executing code? 😱)
 	-consider what code to pass to endpoint (last executed cell, currently selected cell, or nb name and load all code in py file?)
 		-see if we can resolve absolute path to nb (cur have local but we'd need whole thing to load all file code in py file. Or could reconstruct code using history_manager if I can get that working (see backlog)
-	-pass local vars to endpoint
-	-pass global vars to endpoint
 -python endpoint updates
 	-convert get to post if possible (jupyter seemed to not like this)
 	-return full dict instead of just str?

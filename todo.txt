@@ -41,8 +41,9 @@ X -try to rm syntax highlighting
 
 TODO
 ----
--increase min-width (and maybe min-height) of popup box (gets very tiny as page shrinks)
--try to make lack of syntax highlighting just refer to all children of div.CodeMirror-code elements inside my extension, instead of calling out every individual span class. Slightly more robust against jupyter/codemirror api changes.
+X -increase min-width (and maybe min-height) of popup box (gets very tiny as page shrinks)
+X -try to make lack of syntax highlighting just refer to all children of div.CodeMirror-code elements inside my extension, instead of calling out every individual span class. Slightly more robust against jupyter/codemirror api changes.
+	UPDATE: even better - figured out how to make css just make all text inside my extension black and non bold. No reliance on jupyter class names.
 -incrementally get closer to desired cell execution method (dynamically get server url, make async call to endpoint, update output cell w/ markdown)
 	-change sync call to async (talk to codex while kernel is executing code? 😱)
 	-consider what code to pass to endpoint (last executed cell, currently selected cell, or nb name and load all code in py file?)

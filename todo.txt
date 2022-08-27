@@ -77,7 +77,7 @@ Jupyter.notebook
 ----------------
 ['config', 'class_config', 'base_url', 'notebook_path', 'notebook_name', 'events', 'keyboard_manager', 'contents', 'save_widget', 'tooltip', 'ws_url', '_session_starting', 'last_modified', '_last_modified', '_ff_beforeunload_fired', 'scroll_manager', 'element', 'session', 'kernel', 'kernel_busy', 'clipboard', 'clipboard_attachments', 'undelete_backup_stack', 'paste_enabled', 'paste_attachments_enabled', 'writable', 'mode', 'metadata', '_checkpoint_after_save', 'last_checkpoint', 'checkpoints', 'autosave_interval', 'autosave_timer', 'minimum_autosave_interval', 'notebook_name_blacklist_re', 'nbformat', 'current_nbformat_minor', 'nbformat_minor', 'codemirror_mode', 'container', 'kernel_selector', 'dirty', 'trusted', '_changed_on_disk_dialog', '_fully_loaded']
 
-notebook_name, duckling-scratchpad.ipynb (relative path)
+notebook_name, duckling-scratchpad.ipynb (relative path; notebook_path seems to be the same in this case)
 
 Jupyter.notebook.session
 ------------------------

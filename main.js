@@ -22,6 +22,11 @@ define([
   "use strict";
   var CodeCell = codecell.CodeCell;
   var TextCell = textcell.TextCell;
+  var cfg = {
+  	'kernels_config': {
+		local_vars: 'print({k: v for k, v in locals().items() if not (k.startswith("_") and k[1:].isdigit()) and k not in {"_", "__", "___"}})',
+	}
+  }
 
   var Duckling = function (nb) {
     var duckling = this;
@@ -44,24 +49,13 @@ define([
     });
 
     // Create code cell that will pop up on user hotkey.
-	// TODO: trying to disable syntax highlighting. Better way is prob to try to get text cell working.
-	// var cell_config = {...nb.config};
-	// cell_config.highlight_modes = {};
     var cell = this.cell = new CodeCell(nb.kernel, {
       events: nb.events,
 	    config: nb.config,
-	//	config: cell_config,
 		keyboard_manager: nb.keyboard_manager,
 		notebook: nb,
 		tooltip: nb.tooltip,
 		});
-    /*var cell = this.cell = new TextCell({
-      events: nb.events,
-      config: nb.config,
-      keyboard_manager: nb.keyboard_manager,
-      notebook: nb,
-    });*/
-      // TODO Md cell doesn't have this method. But when commented out, cell is not showing up.
     cell.set_input_prompt("User");
     this.element.append($("<div/>").addClass('cell-wrapper').append(this.cell.element));
     cell.render();

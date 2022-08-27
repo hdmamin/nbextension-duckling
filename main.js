@@ -103,8 +103,8 @@ define([
     this.collapsed = false;
     var site_height = $("#site").height();
     this.element.animate({
-      height: Math.max(site_height * 3 / 4, 150),
-    }, 200);
+      height: site_height,
+    }, 150);
     this.open_button.hide();
     this.close_button.show();
     this.cell.element.show();

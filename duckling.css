@@ -3,6 +3,8 @@
   left: 0;
   bottom: 0;
   width: 50%;
+  min-width: 550px;
+  max-width: 825px;
   background-color: #FFFFFF;
   border-right: 2px solid #41A5F5;
   border-top: 2px solid #41A5F5;
@@ -14,7 +16,7 @@
   overflow: auto;
 }
 
-#nbextension-duckling span.cm-def, span.cm-variable, span.cm-variable-2, span.cm-keyword, span.cm-string, span.cm-comment, span.cm-property, span.cm-operator, span.cm-builtin {
+#nbextension-duckling * {
   color: black !important;
   font-weight: normal !important;
 }
@@ -40,5 +42,5 @@
 }
 
 .duckling-open {
-  margin-top: 32px;
+  margin-top: -32px;
 }

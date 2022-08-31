@@ -22,11 +22,6 @@ define([
   "use strict";
   var CodeCell = codecell.CodeCell;
   var TextCell = textcell.TextCell;
-  var cfg = {
-  	'kernels_config': {
-		local_vars: 'print({k: v for k, v in locals().items() if not (k.startswith("_") and k[1:].isdigit()) and k not in {"_", "__", "___"}})',
-	}
-  }
 
   var Duckling = function (nb) {
     var duckling = this;
@@ -135,16 +130,40 @@ define([
 	  //return await fetch(url).then(response => response.json());
   //}
 
+  function localVarsCmd(varnames) {
+  	varnames = new Set(varnames);
+	var unique_names_str = JSON.stringify([...varnames]);
+	return 'print({k: v for k, v in globals().items() if k in ' + unique_names_str + '})';
+  }
+
+  Duckling.prototype.add_varnames_to_metadata = function (msg) {
+	console.log('RELEVANT VARS:', msg.content['text']);
+	// TODO: var "this" is undefined. Weird because it's not in the duckling.prototype_execute_and_select_event.
+	console.log("THIS:", this);
+	if (this.cell.metadata === undefined) {
+		this.cell.metadata = {};
+	}
+	this.cell.metadata['local_vars'] = msg.content['text'];
+  }
+
   Duckling.prototype.execute_and_select_event = function (evt) {
     if (utils.is_focused(this.element)) {
       var txt = this.cell.get_text();
 
 	  var cur_cell = Jupyter.notebook.get_selected_cell();
 	  var code = cur_cell.get_text();
+	  var cur_varnames = $('div.selected').find('span.cm-variable').map(
+	  	function() {
+	      return this.outerText
+		}
+	  ).get();
+	  Jupyter.notebook.kernel.execute(
+	  	localVarsCmd(cur_varnames), {iopub: {output: this.add_varnames_to_metadata}}, {silent: false}
+	  );
 
 	  // Https doesn't work, even from command line with curl. Has to be http.
 	  var base_url = Jupyter.notebook.kernel.ws_url.replace("ws://", "http://");
-	  var url = base_url + "/duckling/ask?question=" + encodeURIComponent(txt) + "&code=" + encodeURIComponent(code);
+	  var url = base_url + "/duckling/ask?question=" + encodeURIComponent(txt) + "&code=" + encodeURIComponent(code) + "&local_vars=" + encodeURIComponent(this.cell.metadata['local_vars']);
 	  //req = fetch(url).then(response => response.json());
 	  var req = new XMLHttpRequest();
 	  // TODO: see if we can get async working (set third arg to true or switch to using commented out fetch line above).

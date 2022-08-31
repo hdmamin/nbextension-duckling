@@ -1,10 +1,20 @@
+from IPython import get_ipython
+from IPython.core.magics.namespace import NamespaceMagics
 import json
 from jupyter_server.base.handlers import JupyterHandler
 import tornado
 
+from htools.core import is_ipy_name
 from jabberwocky.openai_utils import GPT, PromptManager
 
 PM = PromptManager(['debug'])
+SHELL = get_ipython()
+NS_MAGICS = NamespaceMagics(SHELL)
+
+
+def local_vars():
+    varnames = NS_MAGICS.who_ls()
+    return json.dumps(varnames)
 
 
 class DucklingHandler(JupyterHandler):
@@ -20,6 +30,7 @@ class DucklingHandler(JupyterHandler):
         }
         for name in data:
             data[name] = self.get_argument(name, data[name])
+
         # TODO: can think about when we should skip the query (i.e. no code,
         # no question, etc.). For now just filled in default values.
         if data['code']:
@@ -31,8 +42,6 @@ class DucklingHandler(JupyterHandler):
         else:
             self.write('TODO: handle no code')
 
-
-
     # TODO: still get permission error even without tornado auth for post.
     # Maybe jupyter enforces no post endpoints allowed?
     # TODO: reenable auth
@@ -40,3 +49,4 @@ class DucklingHandler(JupyterHandler):
     def post(self):
         code = self.get_argument('code', '')
         self.write(code)
+

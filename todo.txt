@@ -41,17 +41,33 @@ X -try to rm syntax highlighting
 X -increase min-width (and maybe min-height) of popup box (gets very tiny as page shrinks)
 X -try to make lack of syntax highlighting just refer to all children of div.CodeMirror-code elements inside my extension, instead of calling out every individual span class. Slightly more robust against jupyter/codemirror api changes.
 	UPDATE: even better - figured out how to make css just make all text inside my extension black and non bold. No reliance on jupyter class names.
+_ -pass local vars to endpoint
+	UPDATE: still can't find how to get vars in js. Think maybe this happens at the ipython layer (?) so the jupyter api may not be of much use here. Some other options are to follow variable inspector extension example to execute python code printing locals, use js to select codemirror variables from the DOM, or load the notebook text in the backend and do some kind of ast parsing to find vars.
+	UPDATE: trying to store local var str in this.cell.metadata. But Duckling.prototype.add_varnames_to_metadata doesn't currently have access to `this`.
+	OPTIONS:
+		1. try to figure out how to make execute call sync/wait for the async call to complete.
+		2. sleep until cell.metadata is truthy. Reset it to falsy at the end of each call.
+		3. Put the whole codex query inside the execution callback.
+	UPDATE: trying #2 (#3 sounded even trickier bc we need to use response from the second request to duckling endpoint). Current sleep impelmentation crashes jupyter. Next step is to follow stackoverflow example for adding delay in loop.
+	UPDATE: realized in this context we're really using global vars, not locals. Created new prompt to reflect this.
+X -pass global vars to endpoint
+X -figure out how to give add_varnames_to_metadata access to `this` var (currently undefined).
+	UPDATE: slightly hacky solution (probably) but used .bind() to create something resembling a partial.
+X -bug: hotkey deletes char when closing window (ctrl + d may be a bad choice, might be easiest to change it to something else. Or could try to do some logic to check if my cell is selected)
+	> ctrl-l (lowercase L) silently fails but ctrl-j works /shrug
+~ -add some kind of progress bar/thinking wheel while codex call executes
+	_ -or could try streaming outputs? Maybe that would remove the need.
+	UPDATE: added "typing..." msg which is good enough for now. Streaming would be nice but is more complex. I *think* it should be supported because jupyter does have a "stream" mode for cell outputs (in fact, that's what I've been using) but I still need to figure out how to use that for actual streaming.)
+
 
 TODO
 ----
--figure out how to give add_varnames_to_metadata access to `this` var (currently undefined).
+-explore possibility of streaming support for codex response
+	> See example here https://github.com/jupyter-server/jupyter_server/blob/3e64fa5eef7fba9f8e17c30cec688254adf913bd/jupyter_server/files/handlers.py
+-consider better way to get prompt to provide both a NL explanation AND a fixed code snippet (e.g. could chain 2 prompts together but would be nice to do in 1. Could also do 1 shot to demo format. Could also try to instruct more carefully about output format ("in the section titled 'Explanation', use simple language to explain the problem and provide a high level explanation of how to fix it. In the section titled 'Working code snippet', provide a revised code snippet that fixes the problem.") and see if gpt follows the guidelines well.
 -incrementally get closer to desired cell execution method (dynamically get server url, make async call to endpoint, update output cell w/ markdown)
-	~ -pass local vars to endpoint
-		UPDATE: still can't find how to get vars in js. Think maybe this happens at the ipython layer (?) so the jupyter api may not be of much use here. Some other options are to follow variable inspector extension example to execute python code printing locals, use js to select codemirror variables from the DOM, or load the notebook text in the backend and do some kind of ast parsing to find vars.
-		UPDATE: trying to store local var str in this.cell.metadata. But Duckling.prototype.add_varnames_to_metadata doesn't currently have access to `this`.
-
-	-pass global vars to endpoint
-	-change sync call to async (talk to codex while kernel is executing code? 😱)
+	-change sync http call to async (talk to codex while kernel is executing code? 😱)
+		UPDATE: haven't done this yet but I did make my execute function async and it seems to work. I vaguely recall this was at least part of the problem before, that the func was sync so I couldn't use await inside. Maybe now the async http call will work fine.
 	-consider what code to pass to endpoint (last executed cell, currently selected cell, or nb name and load all code in py file?)
 		-see if we can resolve absolute path to nb (cur have local but we'd need whole thing to load all file code in py file. Or could reconstruct code using history_manager if I can get that working (see backlog)
 -python endpoint updates
@@ -62,7 +78,12 @@ TODO
 
 Backlog
 -------
+-explore possible codex performance degradation (was getting some nonsense and empty responses today)
+	-add option to use codex vs model 3 (maybe similar to my method of specifying backend for now)
+	-add some more buggy functions/classes and experiment a bit (maybe bad results were tied to this specific example)
+-consider how jabberwocky should handle case where stopword is in prompt and we use repeat backend. Gets truncated prematurely atm, but maybe that's expected behavior.
 -bug: sometimes jupyter renders a triangular "play" button next to each cell, and clicking the one next to mine tried to execute it as a regular code cell rather than my new logic.
+	> element is div with class "run_this_cell". Could try to select element and rm if found. Might be added by an extension (?) so maybe not always present.
 -opening dev console messes up my ext popup when you close it (all zoomed in, partially offscreen, etc.). Just resizing the page is okay though.
 -[BLOCKED: decide if this is desirable behavior first] follow up on how to pass last executed cell code to endpoint. Recall we can access this in python with get_ipython().history_manager.get_tail(1) but Jupyter.history_manager doesn't seem to exist in JS.
 -bug: shift+enter no longer working in scratchpad (NOT duckling)

@@ -55,6 +55,9 @@ define([
     this.element.append($("<div/>").addClass('cell-wrapper').append(this.cell.element));
     cell.render();
     cell.refresh();
+	cell.metadata = {
+		global_vars: null
+	};
     this.collapse();
 
     // override ctrl/shift-enter to execute me if I'm focused instead of the notebook's cell
@@ -65,9 +68,11 @@ define([
       handler: $.proxy(this.toggle, this),
     }, 'duckling-toggle');
     
+	// Many other characters already perform other text editing tasks and 
+	// adding them as shortcuts here doesn't remove that behavior.
     var shortcuts = {
       'shift-enter': execute_and_select_action,
-      'ctrl-d': toggle_action,
+      'ctrl-j': toggle_action,
     }
     this.km.edit_shortcuts.add_shortcuts(shortcuts);
     this.km.command_shortcuts.add_shortcuts(shortcuts);
@@ -136,20 +141,41 @@ define([
 	return 'print({k: v for k, v in globals().items() if k in ' + unique_names_str + '})';
   }
 
-  Duckling.prototype.add_varnames_to_metadata = function (msg) {
+  function add_varnames_to_metadata (cell, msg) {
 	console.log('RELEVANT VARS:', msg.content['text']);
-	// TODO: var "this" is undefined. Weird because it's not in the duckling.prototype_execute_and_select_event.
-	console.log("THIS:", this);
-	if (this.cell.metadata === undefined) {
-		this.cell.metadata = {};
+	if (cell.metadata === undefined) {
+		cell.metadata = {
+		    global_vars: null
+		};
 	}
-	this.cell.metadata['local_vars'] = msg.content['text'];
+	cell.metadata['global_vars'] = msg.content['text'];
+	console.log('META:', cell.metadata);
   }
 
-  Duckling.prototype.execute_and_select_event = function (evt) {
-    if (utils.is_focused(this.element)) {
-      var txt = this.cell.get_text();
+  /*function sleep(ms) {
+	return new Promise((resolve) => setTimeout(resolve, ms))
+  }*/
 
+  const sleep = ms => new Promise(res => setTimeout(res, ms));
+
+  Duckling.prototype.execute_and_select_event = async function (evt) {
+    if (utils.is_focused(this.element)) {
+	  // TODO: maybe can eventually switch to stream results and/or provide a spinner widget while waiting. 
+	  // In the meantime, a plain text message should be fine.
+      var output = {
+        header: {
+			msg_type: "stream"
+		},
+        content: {
+			text: 'typing...', // Currently server extension just returns bytes.
+			name: "My-Name", // TODO: does this value matter?
+		}
+      }
+      this.cell.output_area.clear_output()
+      this.cell.output_area.handle_output(output)
+
+	  // Now that we've provided a waiting message, we get to the core functionality.
+	  var question = this.cell.get_text();
 	  var cur_cell = Jupyter.notebook.get_selected_cell();
 	  var code = cur_cell.get_text();
 	  var cur_varnames = $('div.selected').find('span.cm-variable').map(
@@ -157,13 +183,23 @@ define([
 	      return this.outerText
 		}
 	  ).get();
+
+	  // Find current variable values and store them as a str in cell metadata.
+	  // TODO: this must be async bc my codex request is happening before it's done.
+	  var onExecute = add_varnames_to_metadata.bind(null, this.cell);
 	  Jupyter.notebook.kernel.execute(
-	  	localVarsCmd(cur_varnames), {iopub: {output: this.add_varnames_to_metadata}}, {silent: false}
+	  	localVarsCmd(cur_varnames), {iopub: {output: onExecute}}, {silent: false}
 	  );
+	  // Must wait until the async execute call above completes before calling codex.
+	  while (this.cell.metadata["global_vars"] === null) {
+	  	await sleep(10);
+		console.log('sleeping');
+	  }
 
 	  // Https doesn't work, even from command line with curl. Has to be http.
 	  var base_url = Jupyter.notebook.kernel.ws_url.replace("ws://", "http://");
-	  var url = base_url + "/duckling/ask?question=" + encodeURIComponent(txt) + "&code=" + encodeURIComponent(code) + "&local_vars=" + encodeURIComponent(this.cell.metadata['local_vars']);
+	  var url = base_url + "/duckling/ask?question=" + encodeURIComponent(question) + "&code=" + encodeURIComponent(code) + "&global_vars=" + encodeURIComponent(this.cell.metadata['global_vars']);
+	  console.log("URL:", url); // TODO rm
 	  //req = fetch(url).then(response => response.json());
 	  var req = new XMLHttpRequest();
 	  // TODO: see if we can get async working (set third arg to true or switch to using commented out fetch line above).
@@ -171,14 +207,13 @@ define([
 	  req.open("GET", url, false);
 	  req.send();
 
-      var output = {
+      output = {
         header: {
 			msg_type: "stream"
 		},
         content: {
-			//text: JSON.parse(req.response)[0].question, // parse mock jeopary api
 			text: req.response, // Currently server extension just returns bytes.
-			name: "My-Name",
+			name: "My-Name", // TODO: does this value matter?
 		}
       }
 
@@ -187,6 +222,7 @@ define([
       this.cell.output_area.handle_output(output)
 
       this.cell.set_input_prompt("User"); // Not working. Number next to cell is incremented rather than setting to User.
+   	  this.cell.metadata['global_vars'] = null;
 
 	  // GENERAL DEBUGGING
 	  console.log(Jupyter);

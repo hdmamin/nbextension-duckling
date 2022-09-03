@@ -64,6 +64,12 @@ TODO
 ----
 -explore possibility of streaming support for codex response
 	> See example here https://github.com/jupyter-server/jupyter_server/blob/3e64fa5eef7fba9f8e17c30cec688254adf913bd/jupyter_server/files/handlers.py
+	> Above example turned out to be a false lead. Made some progress but endpoint still isn't quite working how I want - while the backend enables streaming, the js func ends up reading the whole thing before making any updates.
+>>> LEFT OFF
+	-use python requests (ipython/jupyter) to see if endpoint is actually streaming chunks or if it's waiting to return til the end (curl doesn't seem to work anymore w/ current implementation. Want to confirm actual behavior before diving into JS.)
+		-if we can confirm the endpoint is streaming results, the question then becomes how to make the js portion work. Can try:
+			-extract request code out of func back into main code. Then manually update in some kind of while loop?
+			-dig more into output_area.handle_output js method/func. Might have some code we can use or mimic to update output periodically.
 -consider better way to get prompt to provide both a NL explanation AND a fixed code snippet (e.g. could chain 2 prompts together but would be nice to do in 1. Could also do 1 shot to demo format. Could also try to instruct more carefully about output format ("in the section titled 'Explanation', use simple language to explain the problem and provide a high level explanation of how to fix it. In the section titled 'Working code snippet', provide a revised code snippet that fixes the problem.") and see if gpt follows the guidelines well.
 -incrementally get closer to desired cell execution method (dynamically get server url, make async call to endpoint, update output cell w/ markdown)
 	-change sync http call to async (talk to codex while kernel is executing code? 😱)

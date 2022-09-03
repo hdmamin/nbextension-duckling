@@ -117,24 +117,6 @@ define([
     this.cell.element.hide();
   };
 
-    // TODO: from typescript example. Figure out js equivalent
-  //async callServer(): Promise<void> {
-      //let settings = services.ServerConnection.makeSettings({});
-      //let serverResponse = await services.ServerConnection.makeRequest(
-        //coreutils.URLExt.join(settings.baseUrl, '/duckling/ask'), {method: 'GET'}, settings);
-      //)
-      //alert(await serverResponse.text());
-  //}
-
-  //async callServer(url) {
-	  //var req = new XMLHttpRequest();
-	  //req.open("GET", url, true);
-	  //req.send();
-
-		// V2
-	  //return await fetch(url).then(response => response.json());
-  //}
-
   function localVarsCmd(varnames) {
   	varnames = new Set(varnames);
 	var unique_names_str = JSON.stringify([...varnames]);
@@ -152,11 +134,16 @@ define([
 	console.log('META:', cell.metadata);
   }
 
-  /*function sleep(ms) {
-	return new Promise((resolve) => setTimeout(resolve, ms))
-  }*/
-
   const sleep = ms => new Promise(res => setTimeout(res, ms));
+
+  // Note that jupyter seems to prevent POST requests (403 error) so in
+  // practice this will probably always be a GET request.
+  function request(url, method="GET") {
+  	  var req = new XMLHttpRequest();
+	  req.open(method, url, false);
+	  req.send();
+	  return req.response;
+  }
 
   Duckling.prototype.execute_and_select_event = async function (evt) {
     if (utils.is_focused(this.element)) {
@@ -200,20 +187,15 @@ define([
 	  var base_url = Jupyter.notebook.kernel.ws_url.replace("ws://", "http://");
 	  var url = base_url + "/duckling/ask?question=" + encodeURIComponent(question) + "&code=" + encodeURIComponent(code) + "&global_vars=" + encodeURIComponent(this.cell.metadata['global_vars']);
 	  console.log("URL:", url); // TODO rm
-	  //req = fetch(url).then(response => response.json());
-	  var req = new XMLHttpRequest();
-	  // TODO: see if we can get async working (set third arg to true or switch to using commented out fetch line above).
-	  // Would need to change 1 or more functions to be async to avoid errors (sync can't call async).
-	  req.open("GET", url, false);
-	  req.send();
+      var responseBytes = request(url);
 
       output = {
         header: {
 			msg_type: "stream"
 		},
         content: {
-			text: req.response, // Currently server extension just returns bytes.
-			name: "My-Name", // TODO: does this value matter?
+			text: responseBytes,
+			name: "duckling-response", // TODO: does this value matter?
 		}
       }
 
@@ -226,7 +208,6 @@ define([
 
 	  // GENERAL DEBUGGING
 	  console.log(Jupyter);
-	  //alert(Jupyter.notebook.kernel.last_execution_result); // Cell not dfeined error.
 
     } else {
       this.notebook.execute_cell_and_select_below();

@@ -78,17 +78,16 @@ class DucklingHandler(JupyterHandler):
         else:
             backend = 'repeat'
 
+        # TODO: rm
+        # Adding awaited self.flush call inside loop allows us to stream 
+        # results in python like so (each row is 1 char or maybe 1 byte).
+        # with requests.get(url, stream=True) as r:
+        #     for row in r.iter_content():
+        #         print(row.decode())
+        # TODO end
+
         # TODO: can think about when we should skip the query (i.e. no code,
         # no question, etc.). For now just filled in default values.
-        # if data['code']:
-        #     with GPT(backend):
-        #         # TODO: codex backend working terribly recently. Not sure if it's a prompt thing, an openai thing, or what. Use davinci for now.
-        #         # TODO: rm stop arg. Easiest way to overwrite existing stopword which appears in the prompt itself (which in turn prematurely truncates responses when using Repeat backend).
-        #         res, _ = PM.query('debug_duckling', data, model=3, stop=["zzzzzz"])
-        #     LOGGER.info(res[0])
-        #     self.write(res[0])
-        # else:
-        #     self.write('TODO: handle no code')
         if data['code']:
             with GPT(backend):
                 # TODO: codex backend working terribly recently. Not sure if it's a prompt thing, an openai thing, or what. Use davinci for now.
@@ -99,7 +98,9 @@ class DucklingHandler(JupyterHandler):
                     LOGGER.info('\t' + res)
                     # TODO rm pause
                     time.sleep(.05)
+                    await self.flush()
         else:
+            # TODO: maybe need to convert this to a stream too? Or raise error?
             self.write('TODO: handle no code')
 
     # TODO: still get permission error even without tornado auth for post.
@@ -109,4 +110,3 @@ class DucklingHandler(JupyterHandler):
     def post(self):
         code = self.get_argument('code', '')
         self.write(code)
-

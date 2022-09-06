@@ -56,7 +56,8 @@ class DucklingHandler(JupyterHandler):
     #     else:
     #         self.write('TODO: handle no code')
 
-    @tornado.web.authenticated
+    # TODO: reenable auth
+    # @tornado.web.authenticated
     async def get(self):
         data = {
             'question': 'Why does this code raise an error?',
@@ -96,6 +97,8 @@ class DucklingHandler(JupyterHandler):
                                        stop=["zzzzzz"], stream=True):
                     self.write(res)
                     LOGGER.info('\t' + res)
+                    # TODO rm pause
+                    time.sleep(.05)
         else:
             self.write('TODO: handle no code')
 

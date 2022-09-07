@@ -60,19 +60,28 @@ X -bug: hotkey deletes char when closing window (ctrl + d may be a bad choice, m
 	UPDATE: added "typing..." msg which is good enough for now. Streaming would be nice but is more complex. I *think* it should be supported because jupyter does have a "stream" mode for cell outputs (in fact, that's what I've been using) but I still need to figure out how to use that for actual streaming.)
 X -use python requests (ipython/jupyter) to see if endpoint is actually streaming chunks or if it's waiting to return til the end (curl doesn't seem to work anymore w/ current implementation. Want to confirm actual behavior before diving into JS.)
 	UPDATE: able to stream results when calling w/ python (requests).
+X -add typing effect when displaying response
+	UPDATE: added, though hoping I can eventually remove this in favor of real time streaming (the backend already works, this really shouldn't be that hard to get working in the frontend 😡)
+_ -dig more into output_area.handle_output js method/func. Might have some code we can use or mimic to update output periodically.
+	U: just don't call clear_output in between.
+! -try to reproduce ipython streaming results
+	! -first try js as is. Maybe works already? There is some level of built in support for streaming (I think) since cell execution often involves streaming outputs.
+		UPDATE: no, still waits for end.
+	! -try to reproduce results in jupyter nb
+		UPDATE: no, something weird is going on. In ipython, the intial request is super fast. In jupyter, execute time and block_timer and perf_counter all think execution is super fast, but it's really not (timed with phone stopwatch to confirm).
+	! -see if we can get http request working in chrome js shell (easier to debug)
+		UPDATE: errors even w/ accepted stackoverflow example. May be simpler to troubleshoot in extension code itself.
 
 TODO
 ----
 -explore possibility of streaming support for codex response
 	> See example here https://github.com/jupyter-server/jupyter_server/blob/3e64fa5eef7fba9f8e17c30cec688254adf913bd/jupyter_server/files/handlers.py
 	> Above example turned out to be a false lead. Made some progress but endpoint still isn't quite working how I want - while the backend enables streaming, the js func ends up reading the whole thing before making any updates.
+	-reproduce requests streaming results from main.js in javascript (do NOT try to do in chrome js shell - already tried that and it was not saving any time due to new errors)
 >>> LEFT OFF
-	-reproduce requests streaming results from main.js in javascript
-		-first try it as is. Maybe works already? There is some level of built in support for streaming (I think) since cell execution often involves streaming outputs.
-		-google for how to stream results in js
 		-try codex translation (if nothing else, may give good keywords to google)
+		-google for how to stream results in js
 		-extract request code out of func back into main code. Then manually update in some kind of while loop?
-		-dig more into output_area.handle_output js method/func. Might have some code we can use or mimic to update output periodically.
 -consider better way to get prompt to provide both a NL explanation AND a fixed code snippet (e.g. could chain 2 prompts together but would be nice to do in 1. Could also do 1 shot to demo format. Could also try to instruct more carefully about output format ("in the section titled 'Explanation', use simple language to explain the problem and provide a high level explanation of how to fix it. In the section titled 'Working code snippet', provide a revised code snippet that fixes the problem.") and see if gpt follows the guidelines well.
 -incrementally get closer to desired cell execution method (dynamically get server url, make async call to endpoint, update output cell w/ markdown)
 	-change sync http call to async (talk to codex while kernel is executing code? 😱)

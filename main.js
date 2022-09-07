@@ -161,7 +161,8 @@ define([
       this.cell.output_area.clear_output()
       this.cell.output_area.handle_output(output)
 
-	  // Now that we've provided a waiting message, we get to the core functionality.
+	  // Now that we've provided a waiting message, we get to the core
+	  // functionality.
 	  var question = this.cell.get_text();
 	  var cur_cell = Jupyter.notebook.get_selected_cell();
 	  var code = cur_cell.get_text();
@@ -189,6 +190,8 @@ define([
 	  console.log("URL:", url); // TODO rm
       var responseBytes = request(url);
 
+      // output.content.text is just a placeholder for now - we'll actually
+      // update it 1 char at a time.
       output = {
         header: {
 			msg_type: "stream"
@@ -199,9 +202,20 @@ define([
 		}
       }
 
-	  // Clear output first otherwise subsequent executions append output.
+	  // Clear previous output first, then update output area 1 character at a
+	  // time to simulate typing. Ideally this would occur WHILE the request is
+	  // made rather than waiting until it's complete before starting, but I
+	  // haven't figured out how to do that outside of the ipython shell yet.
+	  // TODO: might want to change sleep time (forgot this is actually ms, not
+	  // s) but maybe wait to see if I can get streaming to work how I want
+	  // (i.e. we shouldn't really need to insert any manual pause at all since
+	  // the text takes some time to generate).
       this.cell.output_area.clear_output()
-      this.cell.output_area.handle_output(output)
+      for (var i = 0; i < responseBytes.length; i++) {
+        output['content']['text'] = responseBytes.charAt(i);
+        this.cell.output_area.handle_output(output);
+        await sleep(.01);
+      }
 
       this.cell.set_input_prompt("User"); // Not working. Number next to cell is incremented rather than setting to User.
    	  this.cell.metadata['global_vars'] = null;

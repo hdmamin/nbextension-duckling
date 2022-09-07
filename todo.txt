@@ -96,6 +96,7 @@ TODO
 
 Backlog
 -------
+-another mode: generate "debugging questions/tasks" (things to try changing to help pin down the problem)
 -explore possible codex performance degradation (was getting some nonsense and empty responses today)
 	-add option to use codex vs model 3 (maybe similar to my method of specifying backend for now)
 	-add some more buggy functions/classes and experiment a bit (maybe bad results were tied to this specific example)

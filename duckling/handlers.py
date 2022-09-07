@@ -10,11 +10,15 @@ from htools.core import is_ipy_name
 from jabberwocky.openai_utils import GPT, PromptManager
 
 PM = PromptManager(['debug_duckling'])
+# TODO: may be able to del shell and NS_MAGICS. Currently passing vars from
+# notebook instead of getting them here.
 SHELL = get_ipython()
 NS_MAGICS = NamespaceMagics(SHELL)
 LOGGER = logging.getLogger()
 
 
+# TODO: may be able to rm. Currently passing vars from notebook instead of
+# getting them here.
 def local_vars():
     varnames = NS_MAGICS.who_ls()
     return json.dumps(varnames)
@@ -81,6 +85,7 @@ class DucklingHandler(JupyterHandler):
         # TODO: rm
         # Adding awaited self.flush call inside loop allows us to stream 
         # results in python like so (each row is 1 char or maybe 1 byte).
+        # UPDATE: works in ipython but not in jupyter :/
         # with requests.get(url, stream=True) as r:
         #     for row in r.iter_content():
         #         print(row.decode())
@@ -97,7 +102,7 @@ class DucklingHandler(JupyterHandler):
                     self.write(res)
                     LOGGER.info('\t' + res)
                     # TODO rm pause
-                    time.sleep(.05)
+                    time.sleep(.025)
                     await self.flush()
         else:
             # TODO: maybe need to convert this to a stream too? Or raise error?
